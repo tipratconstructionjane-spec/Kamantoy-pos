@@ -1,0 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;800&display=swap');
+
+:root {
+    --bg-deep: #0a0a0a;
+    --card-bg: #121212;
+    --border-color: #262626;
+    --primary-red: #dc2626;
+    --primary-red-hover: #b91c1c;
+}
+
+body {
+    font-family: 'Kanit', sans-serif;
+    background-color: var(--bg-deep);
+    color: #e5e5e5;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ปรับแต่ง Scrollbar ให้เข้ากับธีมดาร์ก */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-deep);
+}
+::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-red);
+}
+
+/* เอฟเฟกต์การ์ดเมนูอาหาร แบบเหลี่ยมคมเข้ม ดาร์กฮาร์ดคอร์ */
+.menu-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    transition: all 0.2s ease-in-out;
+}
+
+.menu-card:hover {
+    border-color: var(--primary-red);
+    transform: translateY(-2px);
+}
+
+/* ปุ่มสไตล์ดาร์ก */
+.btn-hardcore {
+    background-color: var(--primary-red);
+    color: #ffffff;
+    border: none;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    transition: background-color 0.2s;
+}
+
+.btn-hardcore:hover {
+    background-color: var(--primary-red-hover);
+}
+
+/* ฟิลด์ Input / เลือกโต๊ะ */
+input, select, textarea {
+    background-color: #171717 !important;
+    border: 1px solid #333 !important;
+    color: #fff !important;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: var(--primary-red) !important;
+    outline: none !important;
+}

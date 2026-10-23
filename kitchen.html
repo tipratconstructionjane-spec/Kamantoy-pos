@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>หน้าจอห้องครัว & เคาน์เตอร์ (KDS) - ร้านข้าวมัน กำนันต้อย</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#121212] text-white font-sans min-h-screen p-6">
+
+    <!-- หัวเว็บ KDS -->
+    <div class="flex justify-between items-center mb-6 border-b border-neutral-800 pb-4">
+        <div>
+            <h1 class="text-xl font-black text-red-500 uppercase">👨‍🍳 หน้าจอห้องครัว & เคาน์เตอร์ (KDS)</h1>
+            <p class="text-xs text-neutral-400">ระบบออร์เดอร์และบิลเรียลไทม์ - ร้านข้าวมัน กำนันต้อย</p>
+        </div>
+        <div class="space-x-2">
+            <a href="index.html" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-xs font-bold rounded">หน้าลูกค้าร้าน</a>
+            <button onclick="clearAllOrders()" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-xs font-bold rounded">🗑️ ล้างออร์เดอร์ทั้งหมด</button>
+        </div>
+    </div>
+
+    <!-- พื้นที่แสดงการ์ดออร์เดอร์จากโต๊ะต่างๆ -->
+    <main>
+        <div id="kitchen-orders-container" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <!-- ออร์เดอร์จะถูกเรนเดอร์ขึ้นมาตรงนี้อัตโนมัติ -->
+            <div class="text-neutral-500 text-center col-span-full py-12">กำลังรอออร์เดอร์จากลูกค้า...</div>
+        </div>
+    </main>
+
+    <!-- สคริปต์ควบคุมห้องครัว -->
+    <script>
+        function loadKitchenOrders() {
+            const container = document.getElementById('kitchen-orders-container');
+            const orders = JSON.parse(localStorage.getItem('kanantoy_orders')) || [];
+
+            if (orders.length === 0) {
+                container.innerHTML = `<div class="text-neutral-500 text-center col-span-full py-12">ยังไม่มีรายการออร์เดอร์ในขณะนี้</div>`;
+                return;
+            }
+
+            let html = '';
+
+            orders.forEach((order, index) => {
+                let badgeColor = order.status === 'service' ? 'bg-yellow-600 text-white' : 'bg-red-600 text-white';
+                let cardBorder = order.status === 'service' ? 'border-yellow-600' : 'border-neutral-800';
+
+                html += `
+                    <div class="bg-neutral-900 border ${cardBorder} rounded-xl p-4 flex flex-col justify-between shadow-xl">
+                        <div>
+                            <div class="flex justify-between items-center mb-3 border-b border-neutral-800 pb-2">
+                                <span class="font-black text-sm px-2 py-1 rounded ${badgeColor}">โต๊ะ ${order.table}</span>
+                                <span class="text-xs text-neutral-400 font-mono">${order.timestamp}</span>
+                            </div>
+                            <p class="text-xs font-mono text-neutral-400 mb-2">${order.orderId}</p>
+                            <div class="space-y-1 mb-4">
+                `;
+
+                order.items.forEach(item => {
+                    html += `
+                        <div class="flex justify-between text-sm">
+                            <span class="text-white">${item.name}</span>
+                            <span class="font-mono font-bold text-red-400">x${item.quantity}</span>
+                        </div>
+                    `;
+                });
+
+                html += `
+                            </div>
+                        </div>
+                        <div class="space-y-2 pt-2 border-t border-neutral-800">
+                            <!-- ปุ่มเปิดบิลของโต๊ะนั้นๆ -->
+                            <button onclick="openTableBill('${order.table}')" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded transition">
+                                🧾 เปิดบิลโต๊ะ ${order.table}
+                            </button>
+                            <!-- ปุ่มลบออร์เดอร์นี้เมื่อทำเสร็จแล้ว -->
+                            <button onclick="removeOrder(${index})" class="w-full bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white text-xs font-bold py-1.5 rounded transition">
+                                ✓ ทำเสร็จ / ลบรายการนี้
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // เปิดหน้าบิลของโต๊ะนั้นๆ (เชื่อมโยงกับ bill.html ที่เราทำไว้)
+        function openTableBill(tableNum) {
+            window.open(`bill.html?table=${tableNum}`, '_blank', 'width=400,height=650');
+        }
+
+        // ลบออร์เดอร์เฉพาะรายการที่ทำเสร็จแล้ว
+        function removeOrder(index) {
+            let orders = JSON.parse(localStorage.getItem('kanantoy_orders')) || [];
+            orders.splice(index, 1);
+            localStorage.setItem('kanantoy_orders', JSON.stringify(orders));
+            loadKitchenOrders();
+        }
+
+        // ล้างออร์เดอร์ทั้งหมด
+        function clearAllOrders() {
+            if (confirm('ยืนยันล้างออร์เดอร์ทั้งหมดในครัวใช่หรือไม่?')) {
+                localStorage.removeItem('kanantoy_orders');
+                loadKitchenOrders();
+            }
+        }
+
+        // โหลดข้อมูลอัตโนมัติ และรีเฟรชเช็กออร์เดอร์ใหม่ทุกๆ 2 วินาที
+        document.addEventListener('DOMContentLoaded', () => {
+            loadKitchenOrders();
+            setInterval(loadKitchenOrders, 2000);
+        });
+    </script>
+</body>
+</html>

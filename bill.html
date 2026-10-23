@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ใบเสร็จ / บิลค่าอาหาร - ร้านข้าวมัน กำนันต้อย</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-black text-gray-100 font-sans min-h-screen p-6">
+    
+    <div class="max-w-md mx-auto bg-neutral-900 border border-neutral-800 p-6 rounded-2xl shadow-2xl mt-6">
+        <!-- หัวบิลร้าน -->
+        <div class="text-center border-b border-neutral-800 pb-4 mb-4">
+            <h1 class="text-2xl font-bold text-red-600 uppercase">ร้านข้าวมัน กำนันต้อย</h1>
+            <p id="bill-table-title" class="text-lg font-semibold text-white mt-1">โต๊ะ --</p>
+            <p id="bill-time" class="text-xs text-neutral-400">วันที่: --</p>
+        </div>
+
+        <!-- รายการอาหารที่สั่ง -->
+        <div class="mb-4">
+            <h2 class="text-xs uppercase text-neutral-400 mb-2 font-semibold">รายการอาหารที่สั่ง</h2>
+            <div id="order-items-container" class="space-y-2 divide-y divide-neutral-800">
+                <!-- รายการอาหารจะถูก JavaScript เติมเข้ามาตรงนี้ -->
+                <div class="text-center text-neutral-500 py-4">ยังไม่มีรายการสั่งอาหาร</div>
+            </div>
+        </div>
+
+        <!-- สรุปยอดเงิน -->
+        <div class="border-t border-neutral-800 pt-4 mb-6 space-y-2">
+            <div class="flex justify-between text-sm text-neutral-300">
+                <span>ยอดรวมอาหาร</span>
+                <span id="subtotal-price">0.00 บาท</span>
+            </div>
+            <div class="flex justify-between text-lg font-bold text-white">
+                <span>ยอดสุทธิทั้งสิ้น</span>
+                <span id="total-price" class="text-red-500">0.00 บาท</span>
+            </div>
+        </div>
+
+        <!-- ปุ่มควบคุม -->
+        <div class="space-y-3">
+            <button onclick="window.print()" class="w-full bg-neutral-800 hover:bg-neutral-700 text-white py-3 rounded-lg font-semibold transition">
+                🖨️ พิมพ์ใบเสร็จ
+            </button>
+            <button onclick="clearBill()" class="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-semibold transition">
+                💰 ชำระเงิน / เคลียร์โต๊ะ
+            </button>
+        </div>
+    </div>
+
+    <!-- ส่วน Script จัดการข้อมูลบิล -->
+    <script>
+        // ดึงเลขโต๊ะจาก URL Parameter (เช่น bill.html?table=1)
+        const urlParams = new URLSearchParams(window.location.search);
+        const tableNumber = urlParams.get('table') || '1'; // ถ้าไม่มีค่าให้ default เป็นโต๊ะ 1
+
+        // แสดงเลขโต๊ะหัวบิล
+        document.getElementById('bill-table-title').innerText = `โต๊ะ ${tableNumber}`;
+        document.getElementById('bill-time').innerText = `วันที่: ${new Date().toLocaleString('th-TH')}`;
+
+        // ฟังก์ชันจำลองการโหลดข้อมูลรายการอาหารที่สั่ง (ดึงจาก localStorage ตามโต๊ะ)
+        function loadBillData() {
+    const allOrders = JSON.parse(localStorage.getItem('kanantoy_orders')) || [];
+    // กรองเฉพาะออร์เดอร์ของโต๊ะนี้ และไม่ใช่รายการเรียกพนักงาน (status !== 'service')
+    const tableOrders = allOrders.filter(o => o.table === tableNumber && o.status !== 'service');
+
+    const container = document.getElementById('order-items-container');
+    const subtotalEl = document.getElementById('subtotal-price');
+    const totalEl = document.getElementById('total-price');
+
+    if (tableOrders.length === 0) {
+        container.innerHTML = `<div class="text-center text-neutral-500 py-4">ยังไม่มีรายการสั่งอาหาร</div>`;
+        subtotalEl.innerText = `0.00 บาท`;
+        totalEl.innerText = `0.00 บาท`;
+        return;
+    }
+
+    // 👉 ใช้ Object เพื่อรวมรายการอาหารที่ชื่อซ้ำกัน (Group By Item Name)
+    let mergedItems = {};
+
+    tableOrders.forEach(order => {
+        order.items.forEach(item => {
+            const itemPrice = item.price || 0;
+            if (mergedItems[item.name]) {
+                // ถ้ามีชื่อนี้อยู่แล้ว ให้บวกจำนวนเพิ่มเข้าไป
+                mergedItems[item.name].quantity += item.quantity;
+            } else {
+                // ถ้ายังไม่มี ให้สร้างรายการใหม่
+                mergedItems[item.name] = {
+                    price: itemPrice,
+                    quantity: item.quantity
+                };
+            }
+        });
+    });
+
+    let html = '';
+    let grandTotal = 0;
+
+    // วนลูปแสดงผลรายการที่รวมแล้ว
+    for (let itemName in mergedItems) {
+        const data = mergedItems[itemName];
+        const itemTotal = data.price * data.quantity;
+        grandTotal += itemTotal;
+
+        html += `
+            <div class="flex justify-between items-center pt-2 pb-2 text-sm">
+                <div>
+                    <p class="font-medium text-white">${itemName}</p>
+                    <p class="text-xs text-neutral-400">จำนวน: ${data.quantity} x ${data.price} บาท</p>
+                </div>
+                <span class="font-semibold text-white">${itemTotal.toLocaleString()} บาท</span>
+            </div>
+        `;
+    }
+
+    container.innerHTML = html;
+    subtotalEl.innerText = `${grandTotal.toLocaleString()} บาท`;
+    totalEl.innerText = `${grandTotal.toLocaleString()} บาท`;
+}
+
+
+        // ฟังก์ชันเคลียร์บิลเมื่อชำระเงินแล้ว
+        function clearBill() {
+            if (confirm(`ยืนยันการชำระเงินและเคลียร์ออร์เดอร์ โต๊ะ ${tableNumber} ใช่หรือไม่?`)) {
+                const storageKey = `cart_table_${tableNumber}`;
+                localStorage.removeItem(storageKey);
+                loadBillData();
+                alert('ชำระเงินเรียบร้อย ขอบคุณที่ใช้บริการครับ!');
+            }
+        }
+
+        // โหลดข้อมูลเมื่อเปิดหน้าเว็บ
+        window.onload = loadBillData;
+    </script>
+</body>
+</html>

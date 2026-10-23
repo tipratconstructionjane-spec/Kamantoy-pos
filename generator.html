@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบสร้าง QR Code โต๊ะ - ข้าวมัน กำนันต้อย</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <!-- ไลบรารีสร้าง QR Code สำเร็จรูป (QRCode.js) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body class="bg-black text-gray-100 font-sans min-h-screen p-6">
+
+    <!-- แถบปุ่มสลับหน้าเว็บลอยได้ -->
+    <div class="fixed top-4 right-4 z-50 bg-neutral-900/90 border border-neutral-700 p-1.5 shadow-2xl backdrop-blur flex space-x-1">
+        <a href="index.html?table=1" class="px-3 py-1.5 bg-neutral-800 hover:bg-red-600 text-xs font-bold uppercase tracking-wider text-white transition">
+            🛍️ ลูกค้า
+        </a>
+        <a href="kitchen.html" class="px-3 py-1.5 bg-neutral-800 hover:bg-red-600 text-xs font-bold uppercase tracking-wider text-white transition">
+            🍳 ห้องครัว
+        </a>
+        <a href="generator.html" class="px-3 py-1.5 bg-neutral-800 hover:bg-red-600 text-xs font-bold uppercase tracking-wider text-white transition">
+            🖨️ สร้าง QR
+        </a>
+    </div>
+
+    <div class="max-w-md mx-auto bg-neutral-900 border border-neutral-800 p-6 shadow-2xl mt-12">
+        <h1 class="text-xl font-black uppercase text-red-600 mb-1">🖨️ สร้าง QR Code ประจำโต๊ะ</h1>
+        <p class="text-xs text-neutral-400 mb-6 uppercase tracking-wider">ร้านข้าวมัน กำนันต้อย</p>
+
+        <!-- ฟอร์มกรอกเลขโต๊ะ -->
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs uppercase text-neutral-400 mb-2">ระบุหมายเลขโต๊ะ</label>
+                <input type="number" id="table-input" value="1" min="1" class="w-full px-4 py-3 text-lg font-mono font-bold text-white bg-neutral-950 border border-neutral-800 focus:border-red-600 outline-none">
+            </div>
+            <button onclick="generateTableQR()" class="w-full bg-red-600 hover:bg-red-700 text-white font-black uppercase py-3 tracking-widest transition">
+                สร้าง QR Code
+            </button>
+        </div>
+
+        <div id="qr-section" class="mt-8 text-center hidden">
+            <div id="qrcode-output" class="flex justify-center mb-4"></div>
+            <p class="text-sm text-gray-400">QR Code สำหรับสแกนสั่งอาหาร โต๊ะนี้</p>
+        </div>        
+            <h2 id="qr-table-label" class="text-2xl font-black text-white uppercase mt-3 tracking-wider">โต๊ะ --</h2>
+            <p id="qr-url-text" class="text-xs font-mono text-neutral-500 mt-1 break-all"></p>
+            
+            <button onclick="window.print()" class="mt-6 bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs uppercase px-6 py-2.5 tracking-wider transition border border-neutral-700">
+                🖨️ พิมพ์ QR Code นี้
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+function generateTableQR() {
+    // 1. ดึงค่าหมายเลขโต๊ะจาก input
+    const tableNumber = document.getElementById('table-input').value;
+    
+    if (!tableNumber) {
+        alert('กรุณาระบุหมายเลขโต๊ะก่อนครับเพื่อน!');
+        return;
+    }
+
+    // 2. กำหนด URL ปลายทางเมื่อลูกค้าสแกน
+    const targetUrl = `index.html?table=${tableNumber}`;
+
+    // 3. แสดงผล QR Code ออกมาที่หน้าจอ
+    const qrSection = document.getElementById('qr-section');
+    const qrcodeOutput = document.getElementById('qrcode-output');
+    
+    qrcodeOutput.innerHTML = "";
+    qrSection.classList.remove('hidden');
+
+    // สร้าง QR Code ใหม่
+    new QRCode(qrcodeOutput, {
+        text: targetUrl,
+        width: 180,
+        height: 180
+    });
+
+    // 4. อัปเดตเลขโต๊ะไปแสดงที่บรรทัด 46 ให้ตรงกับที่กรอก
+    const tableLabel = document.getElementById('qr-table-label');
+    if (tableLabel) {
+        tableLabel.innerText = `โต๊ะ ${tableNumber}`;
+    }
+
+    // (แถม) ถ้าอยากให้แสดงลิงก์ URL ใต้โต๊ะด้วย เปิดบรรทัดนี้ได้เลยครับ
+    // const qrUrlText = document.getElementById('qr-url-text');
+    // if (qrUrlText) {
+    //     qrUrlText.innerText = targetUrl;
+    // }
+}
+
+</script>
+
+</body>
+</html>
